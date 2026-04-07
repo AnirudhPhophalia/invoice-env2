@@ -2,6 +2,115 @@
 
 OpenEnv-compliant environment and full-stack app for invoice automation.
 
+## Quickstart For New Contributors
+
+Follow this section if someone is cloning the repo for the first time.
+
+### 1. Prerequisites
+
+- Python `3.10+`
+- Node.js `18+` and npm
+- Git
+- Docker Desktop (for container checks)
+
+### 2. Clone
+
+```bash
+git clone https://github.com/IshwinderKaur8/invoice-env.git
+cd invoice-env
+git checkout anirudh
+```
+
+### 3. Create Python Environment
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+```
+
+macOS/Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+```
+
+### 4. Configure Environment Variables
+
+Copy example files and edit values as needed:
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Windows PowerShell equivalent:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env
+```
+
+Minimum required for hackathon inference:
+
+- `API_BASE_URL`
+- `MODEL_NAME`
+- `HF_TOKEN`
+
+### 5. Run Core Checks
+
+```bash
+python -m pytest -q
+python scripts/run_baseline.py
+```
+
+### 6. Run Backend + Frontend Locally
+
+Backend (terminal 1):
+
+```bash
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Frontend (terminal 2):
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### 7. Run Submission Inference
+
+```bash
+python inference.py
+```
+
+### 8. Run Pre-Submission Validator
+
+Install validator CLI once:
+
+```bash
+pip install openenv-core
+```
+
+Run checks:
+
+```bash
+openenv validate
+bash validate-submission.sh <your-space-url>
+```
+
 Core goal: train/evaluate agents to process invoices and receipts by solving three tasks in sequence:
 
 1. Field extraction (easy)
@@ -77,6 +186,8 @@ Implementation entrypoint and schema wiring are defined in `openenv.yaml`.
 ├── backend/                 # FastAPI service + Mongo integration
 ├── frontend/                # React/Vite/Tailwind dashboard
 ├── openenv.yaml             # OpenEnv metadata and schema mapping
+├── .env.example             # Root inference env template
+├── validate-submission.sh   # Root wrapper for organizer validator script
 ├── Dockerfile               # Containerized baseline execution
 └── requirements.txt         # Core environment dependencies
 ```
@@ -116,6 +227,10 @@ Set these variables before running `inference.py`:
 - `MODEL_NAME`: model identifier for inference
 - `HF_TOKEN`: API key/token used by OpenAI client
 - `LOCAL_IMAGE_NAME`: local image reference if organizer uses image-backed env constructor
+
+Reference file:
+
+- `.env.example`
 
 Optional reproducibility variables:
 
@@ -186,6 +301,10 @@ Optional backend environment variables:
 - `MONGO_DB_NAME`
 - `FRONTEND_ORIGIN`
 
+Reference file:
+
+- `backend/.env.example`
+
 ### Frontend (React + Vite)
 
 ```bash
@@ -197,6 +316,10 @@ npm run dev
 Optional frontend environment variable:
 
 - `VITE_API_BASE_URL` (default `http://localhost:8000/api`)
+
+Reference file:
+
+- `frontend/.env.example`
 
 ## API Endpoints
 
@@ -225,6 +348,12 @@ Health check examples after startup:
 curl http://localhost:7860/
 curl -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d '{}'
 curl -X POST http://localhost:7860/api/reset -H "Content-Type: application/json" -d '{"batch_size": 8}'
+```
+
+If you need the exact organizer command path from repo root:
+
+```bash
+bash validate-submission.sh <your-space-url>
 ```
 
 ### Hugging Face Spaces
