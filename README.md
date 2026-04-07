@@ -83,6 +83,11 @@ Implementation entrypoint and schema wiring are defined in `openenv.yaml`.
 
 ## Baseline Agent
 
+Two baseline entrypoints are provided:
+
+- `inference.py` (root): hackathon submission script (mandatory filename)
+- `scripts/run_baseline.py`: developer helper script with local heuristic mode
+
 `scripts/run_baseline.py` supports:
 
 - `BASELINE_MODE=auto` (default): OpenAI if API key is present, otherwise heuristic
@@ -100,6 +105,58 @@ Recent heuristic run output:
 - Steps: 12
 - Total score: 8.400
 - Average score: 0.700
+
+## Hackathon Submission Contract
+
+### Required Runtime Variables
+
+Set these variables before running `inference.py`:
+
+- `API_BASE_URL`: API endpoint for the LLM provider
+- `MODEL_NAME`: model identifier for inference
+- `HF_TOKEN`: API key/token used by OpenAI client
+- `LOCAL_IMAGE_NAME`: local image reference if organizer uses image-backed env constructor
+
+Optional reproducibility variables:
+
+- `BATCH_SIZE` (default `24`)
+- `SEED` (default `42`)
+
+### Mandatory Inference Script
+
+The submission inference script is:
+
+- `inference.py` (at repository root)
+
+It uses the OpenAI Python client for all LLM calls and reads credentials/config from the environment variables above.
+
+### Structured Stdout Format
+
+`inference.py` emits strict tagged logs:
+
+- `[START]` once at run start
+- `[STEP]` once per environment step
+- `[END]` once at run completion
+
+Example:
+
+```text
+[START] task=invoice-processing env=invoice-openenv model=Qwen/Qwen2.5-72B-Instruct
+[STEP] step=1 action={"extracted_fields":{"vendor_name":"Amazon","invoice_date":"2026-01-12"},"category":"Office Supplies","anomaly_flag":false} reward=0.70 done=false error=null
+[END] success=true steps=24 score=0.70 rewards=0.70,0.70,0.70
+```
+
+Required line schema (field order preserved):
+
+- `[START] task=<task_name> env=<benchmark> model=<model_name>`
+- `[STEP] step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>`
+- `[END] success=<true|false> steps=<n> score=<score> rewards=<r1,r2,...,rn>`
+
+Run command:
+
+```bash
+python inference.py
+```
 
 ## Local Setup
 
@@ -155,11 +212,19 @@ These endpoints allow both interactive stepping and full-episode automated agent
 
 ### Docker
 
-The repository includes a root `Dockerfile` that installs core dependencies and runs the baseline script.
+The root `Dockerfile` is configured for containerized API execution and HF Spaces compatibility.
 
 ```bash
 docker build -t invoice-openenv .
-docker run --rm invoice-openenv
+docker run --rm -p 7860:7860 invoice-openenv
+```
+
+Health check examples after startup:
+
+```bash
+curl http://localhost:7860/
+curl -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d '{}'
+curl -X POST http://localhost:7860/api/reset -H "Content-Type: application/json" -d '{"batch_size": 8}'
 ```
 
 ### Hugging Face Spaces
@@ -168,8 +233,9 @@ For Spaces Docker deployment:
 
 1. Use this repository as the Space source.
 2. Select Docker SDK.
-3. Set secrets (`OPENAI_API_KEY`) if using OpenAI mode.
-4. Optionally set `BASELINE_MODE=heuristic` for offline demo behavior.
+3. Add Space secrets for `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN`.
+4. Add `openenv` tag in Space metadata.
+5. Verify the Space returns `200` on `/reset` (organizer validator check).
 
 ### Full-Stack Hosting
 
@@ -185,3 +251,20 @@ For Spaces Docker deployment:
 - Baseline script with OpenAI + offline fallback
 - Docker support included
 - Test suite passing (`14 passed`)
+
+## Pre-Submission Checklist
+
+- `openenv.yaml` includes metadata, task definitions, and typed schema references
+- `env/models.py` defines typed Observation/Action/Reward Pydantic models
+- `env/environment.py` implements `step()`, `reset()`, and `state()`
+- 3 tasks implemented with deterministic graders and scores in `0.0..1.0`
+- `inference.py` exists at root and uses OpenAI client + required env variables
+- Structured logs include `[START]`, `[STEP]`, `[END]`
+- Docker image builds and serves API container
+- `/reset` responds successfully from deployed Space
+
+## Organizer Validator Script
+
+The repository includes organizer-compatible pre-validation helper:
+
+- `scripts/validate-submission.sh`
