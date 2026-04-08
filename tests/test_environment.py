@@ -45,7 +45,7 @@ def test_step_progression_and_reward():
     next_obs, reward, done, info = env.step(action)
 
     # Reward should be perfect since dummy graders match
-    assert reward.score == 1.0
+    assert reward.score == 0.99
     assert reward.details["extraction"] == 1.0
     assert reward.details["category"] == 1.0
     assert reward.details["anomaly"] == 1.0

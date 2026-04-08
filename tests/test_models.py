@@ -63,3 +63,11 @@ def test_valid_reward():
 def test_invalid_reward_score():
     with pytest.raises(ValidationError):
         InvoiceReward(score=1.5, details={"extraction": 1.0})
+
+
+def test_reward_rejects_boundary_values():
+    with pytest.raises(ValidationError):
+        InvoiceReward(score=0.0, details={"extraction": 1.0})
+
+    with pytest.raises(ValidationError):
+        InvoiceReward(score=1.0, details={"extraction": 1.0})

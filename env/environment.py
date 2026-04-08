@@ -7,6 +7,10 @@ from .models import InvoiceAction, InvoiceObservation, InvoiceReward
 from .tasks import TASKS, compute_weighted_reward
 
 
+MIN_REWARD_SCORE = 0.01
+MAX_REWARD_SCORE = 0.99
+
+
 class InvoiceEnv:
     """
     Invoice & Receipt Processing Environment (OpenEnv-compliant).
@@ -156,7 +160,10 @@ class InvoiceEnv:
             missed_anomaly=(not pred_anomaly) and truth_anomaly,
         )
 
-        total_score = max(0.0, reward_parts["final_score"] - loop_penalty - destructive_penalty)
+        total_score = max(
+            MIN_REWARD_SCORE,
+            min(MAX_REWARD_SCORE, reward_parts["final_score"] - loop_penalty - destructive_penalty),
+        )
 
         reward = InvoiceReward(
             score=total_score,

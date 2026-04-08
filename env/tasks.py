@@ -49,7 +49,7 @@ def compute_weighted_reward(
 	penalty += 0.12 if false_anomaly else 0.0
 	penalty += 0.15 if missed_anomaly else 0.0
 
-	final_score = max(0.0, min(1.0, base - penalty))
+	final_score = max(0.01, min(0.99, base - penalty))
 	return {
 		"base_score": base,
 		"penalty": penalty,
