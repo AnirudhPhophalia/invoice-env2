@@ -134,21 +134,21 @@ Core goal: train/evaluate agents to process invoices and receipts by solving thr
 
 - Observation: raw invoice fields and text context
 - Action: extract `vendor_name`, `invoice_date`
-- Reward: `+1` exact match; partial credit for fuzzy similarity `>= 0.8`
+- Reward: exact match `0.99`; partial credit for fuzzy similarity `>= 0.8`; minimum `0.01`
 - Grader: deterministic comparison against ground truth
 
 ### Task 2: Expense Categorization (Medium)
 
 - Observation: vendor, description, line-item metadata
 - Action: assign category from `Travel`, `Office Supplies`, `Utilities`, `Misc`
-- Reward: `+1` exact match; `+0.5` if correct label appears in top-2 prediction
+- Reward: exact match `0.99`; `0.5` if correct label appears in top-2 prediction; minimum `0.01`
 - Grader: deterministic category check against labeled data
 
 ### Task 3: Anomaly Detection (Hard)
 
 - Observation: invoice batch context (amount patterns, references, vendor/date behavior)
 - Action: set anomaly flag for duplicate/high-risk invoices
-- Reward: continuous score from precision/recall F1 behavior
+- Reward: continuous score from precision/recall F1 behavior, clamped to `(0,1)` as `0.01..0.99`
 - Grader: deterministic scoring function derived from confusion counts
 
 ## OpenEnv Models

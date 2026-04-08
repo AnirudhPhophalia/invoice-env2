@@ -16,17 +16,20 @@ tasks:
     title: Field Extraction
     difficulty: easy
     description: Extract vendor_name and invoice_date from invoice data.
-    grading: Exact match gets 1.0, fuzzy match above 0.8 gets partial credit.
+    grader: env/graders.py::grade_extraction
+    grading: Exact match gets 0.99, fuzzy match above 0.8 gets partial credit, minimum 0.01.
   - id: expense_categorization
     title: Expense Categorization
     difficulty: medium
     description: Classify into Travel, Office Supplies, Utilities, or Misc.
-    grading: Correct is 1.0, close guess is 0.5 (supports optional top-2 format).
+    grader: env/graders.py::grade_category
+    grading: Correct is 0.99, close guess is 0.5 (supports optional top-2 format), minimum 0.01.
   - id: anomaly_detection
     title: Anomaly Detection
     difficulty: hard
     description: Identify duplicate invoices and unusually high amounts.
-    grading: Continuous deterministic reward using precision, recall, and F1.
+    grader: env/graders.py::grade_anomaly
+    grading: Continuous deterministic reward using precision, recall, and F1, clamped to [0.01, 0.99].
 
 schemas:
   observation: env/models.py::InvoiceObservation
