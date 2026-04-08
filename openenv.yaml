@@ -20,6 +20,11 @@ tasks:
     graders:
       - env/graders.py::grade_extraction
     grading: Exact match gets 0.99, fuzzy match above 0.8 gets partial credit, minimum 0.01.
+    score_range:
+      min_exclusive: 0.0
+      max_exclusive: 1.0
+      min_returned: 0.01
+      max_returned: 0.99
   - id: expense_categorization
     title: Expense Categorization
     difficulty: medium
@@ -28,6 +33,11 @@ tasks:
     graders:
       - env/graders.py::grade_category
     grading: Correct is 0.99, close guess is 0.5 (supports optional top-2 format), minimum 0.01.
+    score_range:
+      min_exclusive: 0.0
+      max_exclusive: 1.0
+      min_returned: 0.01
+      max_returned: 0.99
   - id: anomaly_detection
     title: Anomaly Detection
     difficulty: hard
@@ -36,6 +46,11 @@ tasks:
     graders:
       - env/graders.py::grade_anomaly
     grading: Continuous deterministic reward using precision, recall, and F1, clamped to [0.01, 0.99].
+    score_range:
+      min_exclusive: 0.0
+      max_exclusive: 1.0
+      min_returned: 0.01
+      max_returned: 0.99
 
 schemas:
   observation: env/models.py::InvoiceObservation

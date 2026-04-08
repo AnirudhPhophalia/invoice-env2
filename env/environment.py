@@ -249,7 +249,17 @@ class InvoiceEnv:
                 "loop_events": self.loop_events,
                 "destructive_events": self.destructive_events,
             },
-            "tasks": [task.__dict__ for task in TASKS],
+            "tasks": [
+                {
+                    "id": task.id,
+                    "name": task.name,
+                    "difficulty": task.difficulty,
+                    "description": task.description,
+                    "grader": f"{task.grader.__module__}.{task.grader.__name__}",
+                    "graders": [f"{fn.__module__}.{fn.__name__}" for fn in task.graders],
+                }
+                for task in TASKS
+            ],
         }
 
     def _make_observation(self, invoice: Dict[str, Any]) -> InvoiceObservation:

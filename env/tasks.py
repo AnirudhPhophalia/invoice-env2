@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Callable, Dict, List
+
+from .graders import grade_anomaly, grade_category, grade_extraction
 
 
 @dataclass(frozen=True)
@@ -8,8 +10,8 @@ class TaskDefinition:
 	name: str
 	difficulty: str
 	description: str
-	grader: str
-	graders: List[str]
+	grader: Callable[..., float]
+	graders: List[Callable[..., float]]
 
 
 TASKS: List[TaskDefinition] = [
@@ -18,24 +20,24 @@ TASKS: List[TaskDefinition] = [
 		name="Field Extraction",
 		difficulty="easy",
 		description="Extract vendor_name and invoice_date from invoice text.",
-		grader="env.graders.grade_extraction",
-		graders=["env.graders.grade_extraction"],
+		grader=grade_extraction,
+		graders=[grade_extraction],
 	),
 	TaskDefinition(
 		id="expense_categorization",
 		name="Expense Categorization",
 		difficulty="medium",
 		description="Classify invoice into Travel, Office Supplies, Utilities, or Misc.",
-		grader="env.graders.grade_category",
-		graders=["env.graders.grade_category"],
+		grader=grade_category,
+		graders=[grade_category],
 	),
 	TaskDefinition(
 		id="anomaly_detection",
 		name="Anomaly Detection",
 		difficulty="hard",
 		description="Flag duplicates and unusually high amount invoices.",
-		grader="env.graders.grade_anomaly",
-		graders=["env.graders.grade_anomaly"],
+		grader=grade_anomaly,
+		graders=[grade_anomaly],
 	),
 ]
 
