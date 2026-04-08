@@ -1,169 +1,115 @@
-# Invoice & Receipt Processing Environment (OpenEnv)
+---
+title: NamastAI
+emoji: "💻"
+colorFrom: blue
+colorTo: red
+sdk: docker
+pinned: false
+short_description: invoice-env
+tags:
+    - openenv
+---
 
-OpenEnv-compliant environment for training AI agents on real-world financial workflows: field extraction, expense categorization, and anomaly detection.
+# Invoice & Receipt Processing Platform (OpenEnv + AI Agents)
 
-## Real-World Motivation
+OpenEnv-compliant environment and full-stack app for invoice automation.
 
-This environment simulates the daily challenges faced by accounting teams and financial AI assistants:
+## Quickstart For New Contributors
 
-- **Field Extraction**: Accurately pulling vendor names and dates from varied invoice formats
-- **Expense Categorization**: Classifying expenses into Travel, Office Supplies, Utilities, or Misc
-- **Anomaly Detection**: Identifying duplicate invoices and unusually high amounts that require human review
+Follow this section if someone is cloning the repo for the first time.
 
-## Environment Design
+### 1. Prerequisites
 
-### OpenEnv Specification Compliance
+- Python `3.10+`
+- Node.js `18+` and npm
+- Git
+- Docker Desktop (for container checks)
 
-- `step(action) → (observation, reward, done, info)`: Process one invoice per step
-- `reset() → initial observation`: Start new batch of invoices
-- `state() → current state`: Environment debugging information
-
-### Episode Structure
-
-- **Episode**: One batch of 10 invoices (configurable)
-- **Step**: Process one invoice
-- **Done**: When batch is exhausted
-
-## Observation Space
-
-```python
-Observation:
-- vendor_name: str          # Invoice vendor
-- invoice_date: str         # YYYY-MM-DD format
-- amount: float            # Invoice total
-- description: str         # Item description
-- metadata: dict           # Additional context (id, raw_text, etc.)
-```
-
-## Action Space
-
-```python
-Action:
-- extracted_fields: dict    # {"vendor_name": "...", "invoice_date": "..."}
-- category: str            # "Travel|Office Supplies|Utilities|Misc"
-- anomaly_flag: bool       # True if suspicious
-```
-
-## Reward Function
-
-Continuous reward combining:
-- **Field Extraction (40%)**: Exact match = 1.0, fuzzy >80% = partial
-- **Categorization (30%)**: Correct = 1.0, close guess = 0.5
-- **Anomaly Detection (30%)**: F1 score over batch
-
-Penalties for:
-- Missing required fields (-0.08 each)
-- False anomaly detection (-0.12)
-- Missed anomalies (-0.15)
-
-## Tasks
-
-### Task 1: Field Extraction (Easy)
-Extract `vendor_name` and `invoice_date` from invoice text.
-
-**Grading**: Exact match gets 1.0, fuzzy match above 0.8 gets partial credit.
-
-### Task 2: Expense Categorization (Medium)
-Classify into: Travel, Office Supplies, Utilities, Misc.
-
-**Grading**: Correct gets 1.0, close guess gets 0.5. Supports top-2 format "A|B".
-
-### Task 3: Anomaly Detection (Hard)
-Flag duplicates and unusually high amounts (>2500).
-
-**Grading**: Continuous F1 score using precision/recall over batch.
-
-## Setup Instructions
-
-### Prerequisites
-- Python 3.10+
-- pip
-
-### Installation
+### 2. Clone
 
 ```bash
-# Clone repository
-git clone <repository-url>
+git clone https://github.com/IshwinderKaur8/invoice-env.git
 cd invoice-env
+```
 
-# Create virtual environment
+### 3. Create Python Environment
+
+Windows PowerShell:
+
+```powershell
 python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
-
-# Install dependencies
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
-### Run Baseline
+macOS/Linux:
 
 ```bash
-# Heuristic baseline (no API key needed)
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r backend/requirements.txt
+```
+
+### 4. Configure Environment Variables
+
+Copy example files and edit values as needed:
+
+```bash
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Windows PowerShell equivalent:
+
+```powershell
+Copy-Item .env.example .env
+Copy-Item backend/.env.example backend/.env
+Copy-Item frontend/.env.example frontend/.env
+```
+
+Minimum required for hackathon inference:
+
+- `API_BASE_URL`
+- `MODEL_NAME`
+- `HF_TOKEN`
+
+### 5. Run Core Checks
+
+```bash
+python -m pytest -q
 python scripts/run_baseline.py
-
-# OpenAI baseline (requires API key)
-export OPENAI_API_KEY="your-key-here"
-export BASELINE_MODE="openai"
-python scripts/run_baseline.py
 ```
 
-### Run Tests
+### 6. Run Backend + Frontend Locally
+
+Backend (terminal 1):
 
 ```bash
-python -m pytest
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Docker
+Frontend (terminal 2):
 
 ```bash
-# Build and run
-docker build -t invoice-env .
-docker run invoice-env
+cd frontend
+npm install
+npm run dev
 ```
 
-## Sample Output
+### 7. Run Submission Inference
 
-```
-Starting baseline run (mode=heuristic)...
-step=01 reward=0.700 extract=1.000 cat=1.000 anomaly=0.000
-step=02 reward=0.700 extract=1.000 cat=1.000 anomaly=0.000
-...
-step=12 reward=0.700 extract=1.000 cat=1.000 anomaly=0.000
-
-Episode complete
-steps=12
-total_score=8.400
-avg_score=0.700
-anomaly_counts={'tp': 0, 'fp': 0, 'fn': 4}
+```bash
+python inference.py
 ```
 
-## Project Structure
+### 8. Run Pre-Submission Validator
 
-```
-invoice-env/
-├── env/
-│   ├── environment.py    # Core OpenEnv implementation
-│   ├── models.py         # Pydantic schemas
-│   ├── dataset.py        # Synthetic invoice generator
-│   ├── tasks.py          # Task definitions & reward logic
-│   └── graders.py        # Deterministic scoring functions
-├── scripts/
-│   └── run_baseline.py   # OpenAI + heuristic baseline
-├── openenv.yaml          # Environment specification
-├── requirements.txt      # Python dependencies
-├── Dockerfile           # Container for baseline execution
-└── README.md            # This file
-```
-
-## Team Division
-
-**Person 1 (Core Environment)**: `environment.py`, `models.py`, `openenv.yaml`, step/reset/state logic
-
-**Person 2 (Data + Logic)**: `dataset.py`, `tasks.py`, `graders.py`, reward function
-
-**Person 3 (Integration + Deployment)**: `run_baseline.py`, `Dockerfile`, `README.md`, `requirements.txt`
+Install validator CLI once:
 
 ```bash
 pip install openenv-core
@@ -188,21 +134,21 @@ Core goal: train/evaluate agents to process invoices and receipts by solving thr
 
 - Observation: raw invoice fields and text context
 - Action: extract `vendor_name`, `invoice_date`
-- Reward: `+1` exact match; partial credit for fuzzy similarity `>= 0.8`
+- Reward: exact match `0.99`; partial credit for fuzzy similarity `>= 0.8`; minimum `0.01`
 - Grader: deterministic comparison against ground truth
 
 ### Task 2: Expense Categorization (Medium)
 
 - Observation: vendor, description, line-item metadata
 - Action: assign category from `Travel`, `Office Supplies`, `Utilities`, `Misc`
-- Reward: `+1` exact match; `+0.5` if correct label appears in top-2 prediction
+- Reward: exact match `0.99`; `0.5` if correct label appears in top-2 prediction; minimum `0.01`
 - Grader: deterministic category check against labeled data
 
 ### Task 3: Anomaly Detection (Hard)
 
 - Observation: invoice batch context (amount patterns, references, vendor/date behavior)
 - Action: set anomaly flag for duplicate/high-risk invoices
-- Reward: continuous score from precision/recall F1 behavior
+- Reward: continuous score from precision/recall F1 behavior, clamped to `(0,1)` as `0.01..0.99`
 - Grader: deterministic scoring function derived from confusion counts
 
 ## OpenEnv Models
@@ -323,14 +269,14 @@ Example:
 ```text
 [START] task=invoice-processing env=invoice-openenv model=Qwen/Qwen2.5-72B-Instruct
 [STEP] step=1 action={"extracted_fields":{"vendor_name":"Amazon","invoice_date":"2026-01-12"},"category":"Office Supplies","anomaly_flag":false} reward=0.70 done=false error=null
-[END] success=true steps=24 score=0.70 rewards=0.70,0.70,0.70
+[END] success=true steps=24 rewards=0.70,0.70,0.70
 ```
 
 Required line schema (field order preserved):
 
 - `[START] task=<task_name> env=<benchmark> model=<model_name>`
 - `[STEP] step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>`
-- `[END] success=<true|false> steps=<n> score=<score> rewards=<r1,r2,...,rn>`
+- `[END] success=<true|false> steps=<n> rewards=<r1,r2,...,rn>`
 
 Run command:
 
