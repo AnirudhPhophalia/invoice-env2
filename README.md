@@ -1,3 +1,15 @@
+---
+title: NamastAI
+emoji: "💻"
+colorFrom: blue
+colorTo: red
+sdk: docker
+pinned: false
+short_description: invoice-env
+tags:
+    - openenv
+---
+
 # Invoice & Receipt Processing Platform (OpenEnv + AI Agents)
 
 OpenEnv-compliant environment and full-stack app for invoice automation.
