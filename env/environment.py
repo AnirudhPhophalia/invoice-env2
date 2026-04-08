@@ -215,6 +215,16 @@ class InvoiceEnv:
             "invoice_id": invoice.get("id"),
             "ground_truth_category": invoice.get("category"),
             "ground_truth_anomaly": invoice.get("anomaly_flag"),
+            "task_scores": {
+                "field_extraction": extraction_score,
+                "expense_categorization": category_score,
+                "anomaly_detection": anomaly_score,
+            },
+            "task_graders": {
+                "field_extraction": "env.graders.grade_extraction",
+                "expense_categorization": "env.graders.grade_category",
+                "anomaly_detection": "env.graders.grade_anomaly",
+            },
             "task_context": {
                 "task_1_observation": "Raw invoice text for field extraction",
                 "task_2_observation": "Invoice metadata for categorization",
