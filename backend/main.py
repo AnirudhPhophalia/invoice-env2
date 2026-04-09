@@ -45,15 +45,35 @@ def validate_endpoint():
     """
     try:
         import subprocess
+        import shutil
         import sys
         from pathlib import Path
 
-        # Run openenv validate
+        workspace_root = Path(__file__).parent.parent
+        openenv_cmd = shutil.which("openenv")
+        if not openenv_cmd:
+            candidate_paths = [
+                Path(sys.executable).with_name("openenv.exe"),
+                Path(sys.executable).with_name("openenv"),
+                Path(sys.executable).parent / "Scripts" / "openenv.exe",
+                Path(sys.executable).parent / "Scripts" / "openenv",
+                Path(sys.executable).parent / "bin" / "openenv",
+            ]
+            for candidate in candidate_paths:
+                if candidate.exists():
+                    openenv_cmd = str(candidate)
+                    break
+        if not openenv_cmd:
+            raise RuntimeError("openenv CLI not found in PATH or current Python environment")
+
+        command = [openenv_cmd, "validate"]
+
+        # Run openenv validate through the CLI entrypoint.
         result = subprocess.run(
-            [sys.executable, "-m", "openenv", "validate"],
+            command,
             capture_output=True,
             text=True,
-            cwd=Path(__file__).parent.parent,  # Go to repo root
+            cwd=workspace_root,
             timeout=30
         )
 

@@ -67,6 +67,8 @@ def grade_category(predicted_category: Optional[str], invoice: Dict[str, Any]) -
 	truth = invoice.get("category")
 	if predicted_category is None:
 		return _clamp_open_unit(0.001)
+	if not isinstance(predicted_category, str):
+		predicted_category = str(predicted_category)
 
 	tokens = [piece.strip() for piece in predicted_category.replace("|", ",").split(",") if piece.strip()]
 	if not tokens:
