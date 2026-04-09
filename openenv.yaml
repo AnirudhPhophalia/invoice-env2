@@ -34,12 +34,12 @@ tasks:
     grader: env/graders.py::grade_category
     graders:
       - env/graders.py::grade_category
-    grading: Correct is 0.99, close guess is 0.5 (supports optional top-2 format), minimum 0.01.
+    grading: Correct is 0.999, close guess is 0.8 (supports optional top-2 format), minimum 0.001.
     score_range:
       min_exclusive: 0.0
       max_exclusive: 1.0
       min_returned: 0.001
-      max_returned: 0.99
+      max_returned: 0.999
   - id: anomaly_detection
     name: Anomaly Detection
     title: Anomaly Detection

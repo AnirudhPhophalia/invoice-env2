@@ -53,15 +53,14 @@ def grade_extraction(extracted_fields: Any = None, invoice: Any = None, *args: A
 
 		if _normalize(pred) == _normalize(truth):
 			per_field_scores.append(0.999)
-			continue
-
-		ratio = fuzz.ratio(_normalize(pred), _normalize(truth))
-		if ratio >= 80:
-			per_field_scores.append(round(min(0.998, ratio / 100.0), 4))
 		else:
-			per_field_scores.append(0.001)
+			ratio = fuzz.ratio(_normalize(pred), _normalize(truth))
+			if ratio >= 80:
+				per_field_scores.append(min(0.998, ratio / 100.0))
+			else:
+				per_field_scores.append(0.001)
 
-	score = round(sum(per_field_scores) / len(required), 4)
+	score = sum(per_field_scores) / len(required)
 	return _clamp_open_unit(score)
 
 

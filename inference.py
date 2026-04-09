@@ -70,7 +70,7 @@ def _log_step(step: int, action: str, reward: float, done: bool, error: Optional
     )
 
 
-def _log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+def _log_end(success: bool, steps: int, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(
         f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}",
@@ -192,10 +192,10 @@ def run() -> None:
             _log_step(step=step, action=action_str, reward=float(reward.score), done=done, error=error)
 
         score = sum(rewards) / len(rewards) if rewards else 0.0
-        score = min(max(score, 0.0), 1.0)
+        score = max(0.001, min(0.999, score))
         success = done and score >= 0.0
     finally:
-        _log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+        _log_end(success=success, steps=steps_taken, rewards=rewards)
 
 
 if __name__ == "__main__":
