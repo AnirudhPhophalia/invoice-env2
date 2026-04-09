@@ -14,17 +14,31 @@ def _clamp_open_unit(value: float) -> float:
     return max(0.001, min(0.999, float(value)))
 
 
-def grade_extraction(extracted_fields: Dict[str, Any], invoice: Dict[str, Any]) -> float:
+def _coerce_invoice(invoice: Any, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    if isinstance(invoice, dict):
+        return invoice
+    for key in ("invoice", "observation", "ground_truth", "target", "label"):
+        value = kwargs.get(key)
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
+def grade_extraction(extracted_fields: Any = None, invoice: Any = None, *args: Any, **kwargs: Any) -> float:
     # Support validators that pass the full action payload as first arg.
+    if extracted_fields is None:
+        extracted_fields = kwargs.get("action") or kwargs.get("prediction") or kwargs.get("output")
     if isinstance(extracted_fields, dict) and "extracted_fields" in extracted_fields:
         nested = extracted_fields.get("extracted_fields")
         if isinstance(nested, dict):
             extracted_fields = nested
 
+    if invoice is None and args:
+        invoice = args[0]
+
     if not isinstance(extracted_fields, dict):
         extracted_fields = {}
-    if not isinstance(invoice, dict):
-        invoice = {}
+    invoice = _coerce_invoice(invoice, kwargs)
 
     required = ("vendor_name", "invoice_date")
     per_field_scores = []
@@ -46,13 +60,17 @@ def grade_extraction(extracted_fields: Dict[str, Any], invoice: Dict[str, Any]) 
     return _clamp_open_unit(round(sum(per_field_scores) / len(required), 4))
 
 
-def grade_category(predicted_category: Optional[str], invoice: Dict[str, Any]) -> float:
+def grade_category(predicted_category: Any = None, invoice: Any = None, *args: Any, **kwargs: Any) -> float:
     # Support validators that pass the full action payload as first arg.
+    if predicted_category is None:
+        predicted_category = kwargs.get("action") or kwargs.get("prediction") or kwargs.get("output")
     if isinstance(predicted_category, dict):
         predicted_category = predicted_category.get("category")
 
-    if not isinstance(invoice, dict):
-        invoice = {}
+    if invoice is None and args:
+        invoice = args[0]
+
+    invoice = _coerce_invoice(invoice, kwargs)
 
     truth = invoice.get("category")
     if predicted_category is None:
@@ -95,19 +113,30 @@ def detection_metrics(tp: int, fp: int, fn: int) -> Dict[str, float]:
 
 
 def grade_anomaly(
-    predicted_flag: Optional[bool],
-    invoice: Dict[str, Any],
+    predicted_flag: Any = None,
+    invoice: Any = None,
     tp: int = 0,
     fp: int = 0,
     fn: int = 0,
-    **_: Any,
+    *args: Any,
+    **kwargs: Any,
 ) -> float:
     # Support validators that pass the full action payload as first arg.
+    if predicted_flag is None:
+        predicted_flag = kwargs.get("action") or kwargs.get("prediction") or kwargs.get("output")
     if isinstance(predicted_flag, dict):
         predicted_flag = predicted_flag.get("anomaly_flag")
 
-    if not isinstance(invoice, dict):
-        invoice = {}
+    if invoice is None and args:
+        invoice = args[0]
+    invoice = _coerce_invoice(invoice, kwargs)
+
+    try:
+        tp = int(tp or 0)
+        fp = int(fp or 0)
+        fn = int(fn or 0)
+    except (TypeError, ValueError):
+        tp, fp, fn = 0, 0, 0
 
     truth = bool(invoice.get("anomaly_flag", False))
     pred = bool(predicted_flag) if predicted_flag is not None else False
