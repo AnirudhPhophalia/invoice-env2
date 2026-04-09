@@ -44,8 +44,8 @@ def test_step_progression_and_reward():
 
     next_obs, reward, done, info = env.step(action)
 
-    # Reward should be perfect since dummy graders match
-    assert reward.score == 0.999  # clamped from 1.0
+    # Reward is clamped by env.MAX_REWARD_SCORE.
+    assert reward.score == pytest.approx(0.99)
     assert reward.details["extraction"] == 0.999
     assert reward.details["category"] == 0.999
     assert reward.details["anomaly"] == 0.999

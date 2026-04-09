@@ -2,10 +2,15 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
 from openai import OpenAI
+from pydantic import ValidationError
 
 from env.environment import InvoiceEnv
-from env.models import InvoiceAction
+from env.models import ALLOWED_CATEGORIES, InvoiceAction
+
+
+load_dotenv()
 
 
 IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
@@ -100,14 +105,38 @@ def _to_action(raw_action: Dict[str, Any], observation: Dict[str, Any]) -> Invoi
     if isinstance(category, list):
         category = "|".join(str(item) for item in category[:2])
 
-    return InvoiceAction(
-        extracted_fields={
-            "vendor_name": str(extracted.get("vendor_name", "")),
-            "invoice_date": str(extracted.get("invoice_date", "")),
-        },
-        category=category,
-        anomaly_flag=raw_action.get("anomaly_flag"),
-    )
+    if isinstance(category, str):
+        tokens = [piece.strip() for piece in category.replace("|", ",").split(",") if piece.strip()]
+        tokens = [item for item in tokens if item in ALLOWED_CATEGORIES]
+        category = "|".join(tokens[:2]) if tokens else "Misc"
+    elif category is None:
+        category = "Misc"
+    else:
+        category = "Misc"
+
+    anomaly_flag = raw_action.get("anomaly_flag")
+    if not isinstance(anomaly_flag, bool):
+        anomaly_flag = False
+
+    try:
+        return InvoiceAction(
+            extracted_fields={
+                "vendor_name": str(extracted.get("vendor_name", "")),
+                "invoice_date": str(extracted.get("invoice_date", "")),
+            },
+            category=category,
+            anomaly_flag=anomaly_flag,
+        )
+    except ValidationError:
+        # Keep benchmark execution alive even if model output is malformed.
+        return InvoiceAction(
+            extracted_fields={
+                "vendor_name": str(observation.get("vendor_name", "")),
+                "invoice_date": str(observation.get("invoice_date", "")),
+            },
+            category="Misc",
+            anomaly_flag=False,
+        )
 
 
 def run() -> None:
@@ -120,13 +149,17 @@ def run() -> None:
     _log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     try:
-        if not API_KEY:
-            raise RuntimeError("Missing required environment variable: HF_TOKEN")
+        requires_auth = "huggingface.co" in API_BASE_URL.lower()
+        if requires_auth and not API_KEY:
+            raise RuntimeError(
+                "Missing required environment variable: HF_TOKEN or API_KEY for Hugging Face router"
+            )
 
         # Referenced for organizer compatibility when using image-backed environments.
         _ = IMAGE_NAME
 
-        client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL)
+        # Local/OpenAI-compatible endpoints often ignore auth but OpenAI client expects a value.
+        client = OpenAI(api_key=API_KEY or "dummy", base_url=API_BASE_URL)
         env = InvoiceEnv(batch_size=BATCH_SIZE, seed=SEED, shuffle=True)
         observation = env.reset()
 
