@@ -1,0 +1,130 @@
+Hugging Face Space Deployment Runbook (for NamastAI)
+==========================================================
+
+Goal
+----
+Push the full repository to the Space: AnirudhPhophalia/NamastAI
+So the Space contains the same code as your GitHub repo.
+
+Prerequisites
+-------------
+1) Git installed
+2) Access to Hugging Face account 'AnirudhPhophalia'
+3) New Space 'NamastAI' already created on Hugging Face (Docker SDK)
+4) Space URL/repo: https://huggingface.co/spaces/AnirudhPhophalia/NamastAI
+
+Step 1: Open project and verify git status
+------------------------------------------
+PowerShell:
+  cd D:\vsc\invoice-env
+  git status -sb
+
+If there are local changes you want to include:
+  git add .
+  git commit -m "Initialize deployment to AnirudhPhophalia/NamastAI"
+
+Step 2: Ensure main branch is up to date on GitHub
+---------------------------------------------------
+  git push origin main
+
+Step 3: Add/Update Hugging Face remote
+------------------------------------
+Add the remote pointing to your specific Space:
+  git remote add hf https://huggingface.co/spaces/AnirudhPhophalia/NamastAI
+
+If the remote 'hf' already exists and you want to point it to this name:
+  git remote remove hf
+  git remote add hf https://huggingface.co/spaces/AnirudhPhophalia/NamastAI
+
+Check remotes:
+  git remote -v
+
+Step 4: Push code to Hugging Face
+------------------------------
+  git push hf main
+
+If remote main exists and histories differ, use one-time force push carefully:
+  git push hf main --force
+
+Step 5: Verify GitHub and HF are on same commit
+------------------------------------------------
+  git ls-remote origin refs/heads/main
+  git ls-remote hf refs/heads/main
+
+Hashes (long IDs like 9f6eac9...) should match.
+
+Step 6: Configure Space variables/secrets (Hugging Face UI)
+------------------------------------------------------------
+In https://huggingface.co/spaces/AnirudhPhophalia/NamastAI/settings -> Variables and secrets:
+  API_BASE_URL   (variable)
+  MODEL_NAME     (variable)
+  HF_TOKEN       (secret)
+
+Step 7: Confirm Space is running
+--------------------------------
+Wait for the status to become "Running" in the UI.
+
+Test API (PowerShell):
+  try {
+    $resp = Invoke-WebRequest -Uri "https://anirudhphophalia-namastai.hf.space/reset" -Method Post -ContentType "application/json" -Body "{}" -UseBasicParsing -TimeoutSec 30
+    "STATUS=$($resp.StatusCode)"
+  } catch {
+    "ERROR=$($_.Exception.Message)"
+  }
+
+Step 8: Run local pre-submit checks
+-----------------------------------
+  .\.venv\Scripts\openenv.exe validate
+  python -m pytest -q
+  python inference.py
+
+Step 9: Run validator script against Space
+------------------------------------------
+Git Bash / WSL:
+  bash validate-submission.sh https://anirudhphophalia-namastai.hf.space
+
+Step 10: Submit in portal
+-------------------------
+- Submit only after Space is Running and synced to latest commit.
+- Use the Space URL: https://huggingface.co/spaces/AnirudhPhophalia/NamastAI
+
+### Recommended Daily Sync (Commit & Push to Both)
+After making any changes to your code, run these commands to sync both GitHub and Hugging Face:
+
+```powershell
+# 1. Stage all changes
+git add .
+
+# 2. Commit with a descriptive message
+git commit -m "Describe your fix here (e.g., Updated grader logic)"
+
+# 3. Push to GitHub (Primary backup)
+git push origin main
+
+# 4. Push to Hugging Face (Deploy to Space)
+git push hf main
+```
+
+Quick Command (One-liner for PowerShell):
+-----------------------------------------
+  git add . ; git commit -m "Sync fixes" ; git push origin main ; git push hf main
+
+Troubleshooting
+---------------
+1) "inference.py" failures:
+   - Ensure HF_TOKEN secret exists in Space
+   - Ensure API_BASE_URL and MODEL_NAME variables are set
+
+2) Task validation failures:
+   - Ensure openenv.yaml has 3 tasks
+   - Ensure graders return scores strictly between 0 and 1
+   - Ensure latest commit is pushed to both origin and hf
+
+3) Docker build failures:
+   - Start Docker Desktop locally
+   - Re-run: docker build -t invoice-openenv .
+
+4) Space not updating:
+   - Confirm push target remote is correct (hf)
+   - Compare commit hashes (Step 5)
+   - Rebuild/restart Space in Hugging Face UI
