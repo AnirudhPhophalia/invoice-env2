@@ -13,6 +13,7 @@ environment:
 
 tasks:
   - id: field_extraction
+    name: Field Extraction
     title: Field Extraction
     difficulty: easy
     description: Extract vendor_name and invoice_date from invoice data.
@@ -23,9 +24,10 @@ tasks:
     score_range:
       min_exclusive: 0.0
       max_exclusive: 1.0
-      min_returned: 0.01
+      min_returned: 0.001
       max_returned: 0.99
   - id: expense_categorization
+    name: Expense Categorization
     title: Expense Categorization
     difficulty: medium
     description: Classify into Travel, Office Supplies, Utilities, or Misc.
@@ -36,9 +38,10 @@ tasks:
     score_range:
       min_exclusive: 0.0
       max_exclusive: 1.0
-      min_returned: 0.01
+      min_returned: 0.001
       max_returned: 0.99
   - id: anomaly_detection
+    name: Anomaly Detection
     title: Anomaly Detection
     difficulty: hard
     description: Identify duplicate invoices and unusually high amounts.
@@ -49,7 +52,7 @@ tasks:
     score_range:
       min_exclusive: 0.0
       max_exclusive: 1.0
-      min_returned: 0.01
+      min_returned: 0.001
       max_returned: 0.99
 
 schemas:
