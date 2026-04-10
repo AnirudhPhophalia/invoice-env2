@@ -2,7 +2,7 @@ import random
 from typing import Any, Dict, List, Optional, Tuple
 
 from .dataset import load_invoices
-from .graders import detection_metrics, grade_anomaly, grade_category, grade_extraction
+from .graders import detection_metrics, grade_anomaly, grade_category, grade_extraction, _clamp_open_unit
 from .models import InvoiceAction, InvoiceObservation, InvoiceReward
 from .tasks import TASKS, compute_weighted_reward
 
@@ -108,8 +108,8 @@ class InvoiceEnv:
         invoice = self.current_invoice
 
         # Deterministic grading
-        extraction_score = grade_extraction(action.extracted_fields, invoice)
-        category_score = grade_category(action.category, invoice)
+        extraction_score = _clamp_open_unit(grade_extraction(action.extracted_fields, invoice))
+        category_score = _clamp_open_unit(grade_category(action.category, invoice))
         try:
             anomaly_score = grade_anomaly(
                 action.anomaly_flag,
@@ -120,7 +120,7 @@ class InvoiceEnv:
             )
         except TypeError:
             # Backward compatibility for monkeypatched 2-argument graders in tests.
-            anomaly_score = grade_anomaly(action.anomaly_flag, invoice)
+            anomaly_score = _clamp_open_unit(grade_anomaly(action.anomaly_flag, invoice))
 
         truth_anomaly = bool(invoice.get("anomaly_flag", False))
         pred_anomaly = bool(action.anomaly_flag) if action.anomaly_flag is not None else False
